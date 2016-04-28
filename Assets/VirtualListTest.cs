@@ -12,13 +12,10 @@ public class VirtualListTest : MonoBehaviour
 	private float spacing;
 	private List<VirtualListItem> virtualItems;
 
-	private LayoutGroup layoutGroup;
-
 	void Start ()
 	{
 		virtualItems = new List<VirtualListItem> ();
 		rectTransform = GetComponent<RectTransform> ();
-		layoutGroup = GetComponent<LayoutGroup> ();
 
 		spacing = GetComponent<VerticalLayoutGroup> ().spacing;
 
@@ -38,22 +35,28 @@ public class VirtualListTest : MonoBehaviour
 			AddChildToBottom ();
 		}
 
-		// Remove children from top
-		while (scrollRect.verticalNormalizedPosition < 1 && rectTransform.offsetMax.y - layoutGroup.padding.top > virtualItems[0].gameObject.GetComponent<RectTransform>().rect.height + spacing)
+		while (scrollRect.verticalNormalizedPosition < 1 && rectTransform.offsetMax.y > virtualItems[0].gameObject.GetComponent<RectTransform>().rect.height + spacing)
 		{
+			Debug.Log ("Item should be removed." + rectTransform.offsetMax.y + " > " + virtualItems[0].gameObject.GetComponent<RectTransform>().rect.height  + " + "  + spacing);
+
 			RemoveChildFromTop();
 		}
 
-		// Add children to bottom
-		while (rectTransform.offsetMin.y > 0)
+		/*if (Input.GetKeyDown(KeyCode.D))
+		{
+			GameObject childToRemove = virtualItems [0];
+
+			float childHeightAndSpacing = childToRemove.GetComponent<RectTransform> ().rect.height + spacing;
+			float totalScrollableHeight = rectTransform.rect.height - transform.parent.GetComponent<RectTransform>().rect.height;
+			float delta = childHeightAndSpacing / totalScrollableHeight;
+
+			scrollRect.verticalNormalizedPosition += delta;
+		}*/
+
+		/*while (rectTransform.offsetMin.y > 0)
 		{
 			AddChildToBottom ();
-		}
-
-		// Add children to top
-
-		//while (rectTransform.offsetMax.y - layoutGroup.padding.top
-
+		}*/
 	}
 
 	void AddChildToBottom()
@@ -83,7 +86,9 @@ public class VirtualListTest : MonoBehaviour
 		float totalScrollableHeight = rectTransform.rect.height - transform.parent.GetComponent<RectTransform>().rect.height;
 		float delta = childHeightAndSpacing / totalScrollableHeight;
 
-		layoutGroup.padding.top += Mathf.RoundToInt(childHeightAndSpacing);
+		Vector2 currentVelocity = scrollRect.velocity;
+		scrollRect.verticalNormalizedPosition += delta;
+		scrollRect.velocity = currentVelocity;
 
 		Destroy (childToRemove);
 		virtualItems.Remove (itemToRemove);
