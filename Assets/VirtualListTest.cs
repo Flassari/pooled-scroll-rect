@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class VirtualListTest : MonoBehaviour
 {
 	public Child childPrefab;
-	public ScrollRect scrollRect;
+	public CustomScrollRect scrollRect;
 
 	private RectTransform rectTransform;
 	private float spacing;
@@ -22,7 +22,7 @@ public class VirtualListTest : MonoBehaviour
 		scrollRect.StopMovement ();
 		scrollRect.verticalNormalizedPosition = 0;
 
-		while (rectTransform.offsetMin.y > 0)
+		while (rectTransform.offsetMin.y > 0 || virtualItems.Count < 100)
 		{
 			AddChildToBottom ();
 		}
@@ -86,9 +86,7 @@ public class VirtualListTest : MonoBehaviour
 		float totalScrollableHeight = rectTransform.rect.height - transform.parent.GetComponent<RectTransform>().rect.height;
 		float delta = childHeightAndSpacing / totalScrollableHeight;
 
-		Vector2 currentVelocity = scrollRect.velocity;
-		scrollRect.verticalNormalizedPosition += delta;
-		scrollRect.velocity = currentVelocity;
+		scrollRect.SetContentAnchoredPos (new Vector2(rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y - childHeightAndSpacing));
 
 		Destroy (childToRemove);
 		virtualItems.Remove (itemToRemove);
