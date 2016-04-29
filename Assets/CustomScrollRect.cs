@@ -18,12 +18,13 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	private Stack<GameObject> pool;
 	private List<VirtualListItem> virtualItems;
 	private float spacing;
+	private int maxIndex = -1;
 
 	public void Initialize(Func<int, GameObject, GameObject> createItemCallback)
 	{
 		this.createItemCallback = createItemCallback;
 		
-		contentRectTransform = content.GetComponent<RectTransform> ();
+		contentRectTransform = (RectTransform) content.transform;
 		spacing = content.GetComponent<VerticalLayoutGroup> ().spacing;
 		pool = new Stack<GameObject> ();
 		virtualItems = new List<VirtualListItem> ();
@@ -77,15 +78,21 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	{
 		if (position == ChildPosition.Last)
 		{
+			if (maxIndex != -1 && GetNextIndex (position) >= maxIndex)
+				return false;
+			
 			return contentRectTransform.offsetMin.y > 0;
 		}
 		else
 		{
+			if (GetNextIndex (position) < 0)
+				return false;
+			
 			return contentRectTransform.offsetMax.y < 0;
 		}
 	}
 
-	private void AddChild(ChildPosition position = ChildPosition.Last)
+	private int GetNextIndex(ChildPosition position)
 	{
 		int index = 0;
 		if (virtualItems.Count > 0)
@@ -100,6 +107,13 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 			}
 		}
 
+		return index;
+	}
+
+	private void AddChild(ChildPosition position = ChildPosition.Last)
+	{
+		int index = GetNextIndex (position);
+
 		GameObject newChild = null;
 		if (pool.Count > 0)
 		{
@@ -108,6 +122,13 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 
 		newChild = createItemCallback (index, newChild);
+		if (newChild == null)
+		{
+			// End of the list
+			maxIndex = index;
+			return;
+		}
+
 		newChild.transform.SetParent (content.transform);
 
 		if (position == ChildPosition.First)

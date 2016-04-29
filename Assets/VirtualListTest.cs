@@ -15,6 +15,9 @@ public class VirtualListTest : MonoBehaviour
 
 	private GameObject GetListItem(int index, GameObject pooledObject)
 	{
+		if (index < 0 || index > 100)
+			return null;
+		
 		if (pooledObject == null)
 		{
 			pooledObject = Instantiate (childPrefab).gameObject;
