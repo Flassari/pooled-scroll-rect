@@ -32,9 +32,9 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		StopMovement();
 		verticalNormalizedPosition = 0;
 
-		while (contentRectTransform.offsetMin.y > 0)
+		while (CanAddChildAt(ChildPosition.Last))
 		{
-			AddChild();
+			AddChild(position: ChildPosition.Last);
 		}
 	}
 
