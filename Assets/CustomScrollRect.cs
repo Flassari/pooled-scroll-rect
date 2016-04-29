@@ -41,28 +41,28 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	{
 		bool wasDragging = isDragging;
 
-		// Remove children from top
+		// Remove children from beginning
 		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && contentRectTransform.offsetMax.y > ((RectTransform)virtualItems[0].gameObject.transform).rect.height + spacing)
 		{
 			RemoveChild();
 		}
 
-		// Remove children from bottom
+		// Remove children from end
 		while (virtualItems.Count > 0 && verticalNormalizedPosition < 1 && contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems[virtualItems.Count - 1].gameObject.transform).rect.height + spacing))
 		{
 			RemoveChild(removeLastChild: true);
 		}
 
-		// Add children to bottom
-		while (contentRectTransform.offsetMin.y > 0)
+		// Add children to end
+		while (CanAddChildAt(ChildPosition.Last))
 		{
-			AddChild ();
+			AddChild (position: ChildPosition.Last);
 		}
 
-		// Add children to top
-		while (contentRectTransform.offsetMax.y < 0)
+		// Add children to beginning
+		while (CanAddChildAt(ChildPosition.First))
 		{
-			AddChild (setAsFirstSibling: true);
+			AddChild (position: ChildPosition.First);
 		}
 
 		if (wasDragging && !isDragging)
@@ -73,12 +73,24 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 	}
 
-	private void AddChild(bool setAsFirstSibling = false)
+	private bool CanAddChildAt(ChildPosition position = ChildPosition.Last)
+	{
+		if (position == ChildPosition.Last)
+		{
+			return contentRectTransform.offsetMin.y > 0;
+		}
+		else
+		{
+			return contentRectTransform.offsetMax.y < 0;
+		}
+	}
+
+	private void AddChild(ChildPosition position = ChildPosition.Last)
 	{
 		int index = 0;
 		if (virtualItems.Count > 0)
 		{
-			if (setAsFirstSibling)
+			if (position == ChildPosition.First)
 			{
 				index = virtualItems [0].index - 1;
 			}
@@ -98,7 +110,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		newChild = createItemCallback (index, newChild);
 		newChild.transform.SetParent (content.transform);
 
-		if (setAsFirstSibling)
+		if (position == ChildPosition.First)
 		{
 			newChild.transform.SetAsFirstSibling ();
 		}
@@ -109,7 +121,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		Canvas.ForceUpdateCanvases ();
 
-		if (setAsFirstSibling)
+		if (position == ChildPosition.First)
 		{
 			float childHeightAndSpacing = ((RectTransform)newChild.transform).rect.height + spacing;
 			SetContentAnchoredPos (new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
@@ -191,5 +203,11 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		public GameObject gameObject;
 		public int index;
+	}
+
+	enum ChildPosition
+	{
+		First,
+		Last
 	}
 }
