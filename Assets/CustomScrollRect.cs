@@ -15,8 +15,8 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	private PointerEventData lastBeginDragEventData;
 	private RectTransform contentRectTransform;
 
-	private Stack<GameObject> pool;
-	private List<VirtualListItem> virtualItems;
+	private Stack<GameObject> pool = new Stack<GameObject>();
+	private List<VirtualListItem> virtualItems = new List<VirtualListItem>();
 	private float spacing;
 	private int maxIndex = -1;
 
@@ -26,46 +26,46 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		
 		contentRectTransform = (RectTransform)content.transform;
 		spacing = content.GetComponent<VerticalLayoutGroup>().spacing;
-		pool = new Stack<GameObject>();
-		virtualItems = new List<VirtualListItem>();
 
 		StopMovement();
 		verticalNormalizedPosition = 0;
 
 		while (CanAddChildAt(ChildPosition.Last))
 		{
-			AddChild(position: ChildPosition.Last);
+			AddChild(ChildPosition.Last);
 		}
 	}
 
 	protected void Update()
 	{
+		if (!content || !contentRectTransform) return;
+		
 		bool wasDragging = isDragging;
 
 		// Remove children from beginning
 		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && 
 			contentRectTransform.offsetMax.y > ((RectTransform)virtualItems[0].gameObject.transform).rect.height + spacing)
 		{
-			RemoveChild();
+			RemoveChild(ChildPosition.First);
 		}
 
 		// Remove children from end
 		while (virtualItems.Count > 0 && verticalNormalizedPosition < 1 && 
 			contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems[virtualItems.Count - 1].gameObject.transform).rect.height + spacing))
 		{
-			RemoveChild(removeLastChild: true);
+			RemoveChild(ChildPosition.Last);
 		}
 
 		// Add children to beginning
 		while (CanAddChildAt(ChildPosition.First))
 		{
-			AddChild(position: ChildPosition.First);
+			AddChild(ChildPosition.First);
 		}
 
 		// Add children to end
 		while (CanAddChildAt(ChildPosition.Last))
 		{
-			AddChild(position: ChildPosition.Last);
+			AddChild(ChildPosition.Last);
 		}
 
 		if (wasDragging && !isDragging)
@@ -76,7 +76,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 	}
 
-	private bool CanAddChildAt(ChildPosition position = ChildPosition.Last)
+	private bool CanAddChildAt(ChildPosition position)
 	{
 		if (position == ChildPosition.Last)
 		{
@@ -112,7 +112,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		return index;
 	}
 
-	private void AddChild(ChildPosition position = ChildPosition.Last)
+	private void AddChild(ChildPosition position)
 	{
 		int index = GetNextIndex(position);
 
@@ -156,14 +156,14 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 	}
 
-	private void RemoveChild(bool removeLastChild = false)
+	private void RemoveChild(ChildPosition position)
 	{
-		VirtualListItem itemToRemove = virtualItems [removeLastChild ? virtualItems.Count - 1 : 0];
+		VirtualListItem itemToRemove = virtualItems [position == ChildPosition.Last ? virtualItems.Count - 1 : 0];
 		GameObject childToRemove = itemToRemove.gameObject;
 
 		float childHeightAndSpacing = ((RectTransform)childToRemove.transform).rect.height + spacing;
 
-		if (!removeLastChild)
+		if (position == ChildPosition.First)
 		{
 			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, 
 				contentRectTransform.anchoredPosition.y - childHeightAndSpacing));
