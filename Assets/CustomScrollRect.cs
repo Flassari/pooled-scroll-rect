@@ -116,21 +116,25 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	{
 		int index = GetNextIndex(position);
 
-		GameObject newChild = null;
+		GameObject pooledChild = null;
 		if (pool.Count > 0)
 		{
-			newChild = pool.Pop();
-			newChild.SetActive(true);
+			pooledChild = pool.Pop();
 		}
 
-		newChild = createItemCallback(index, newChild);
+		GameObject newChild = createItemCallback(index, pooledChild);
 		if (newChild == null)
 		{
 			// End of the list
 			maxIndex = index;
+			// Return it back to the pool
+			pool.Push (pooledChild);
+			// Make sure it wasn't activated in createItemCallback
+			pooledChild.SetActive(false);
 			return;
 		}
 
+		newChild.SetActive(true);
 		newChild.transform.SetParent(content.transform);
 
 		if (position == ChildPosition.First)
