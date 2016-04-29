@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, IDragHandler
+public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, IDragHandler
 {
 	private Func<int, GameObject, GameObject> createItemCallback;
 	

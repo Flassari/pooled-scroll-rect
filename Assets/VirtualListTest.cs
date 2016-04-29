@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class VirtualListTest : MonoBehaviour
 {
 	public Child childPrefab;
-	public CustomScrollRect scrollRect;
+	public PooledScrollRect scrollRect;
 
 	void Start()
 	{
