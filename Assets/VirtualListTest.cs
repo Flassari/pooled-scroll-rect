@@ -8,9 +8,9 @@ public class VirtualListTest : MonoBehaviour
 	public Child childPrefab;
 	public CustomScrollRect scrollRect;
 
-	void Start ()
+	void Start()
 	{
-		scrollRect.Initialize (GetListItem);
+		scrollRect.Initialize(GetListItem);
 	}
 
 	private GameObject GetListItem(int index, GameObject pooledObject)
@@ -20,13 +20,13 @@ public class VirtualListTest : MonoBehaviour
 		
 		if (pooledObject == null)
 		{
-			pooledObject = Instantiate (childPrefab).gameObject;
+			pooledObject = Instantiate(childPrefab).gameObject;
 		}
 
-		Child child = pooledObject.GetComponent<Child> ();
+		Child child = pooledObject.GetComponent<Child>();
 		child.text.text = "#" + index;
 
-		child.GetComponent<LayoutElement> ().preferredHeight = Random.Range (20, 300);
+		child.GetComponent<LayoutElement>().preferredHeight = Random.Range(20, 300);
 
 		return child.gameObject;
 	}

@@ -24,17 +24,17 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	{
 		this.createItemCallback = createItemCallback;
 		
-		contentRectTransform = (RectTransform) content.transform;
-		spacing = content.GetComponent<VerticalLayoutGroup> ().spacing;
-		pool = new Stack<GameObject> ();
-		virtualItems = new List<VirtualListItem> ();
+		contentRectTransform = (RectTransform)content.transform;
+		spacing = content.GetComponent<VerticalLayoutGroup>().spacing;
+		pool = new Stack<GameObject>();
+		virtualItems = new List<VirtualListItem>();
 
-		StopMovement ();
+		StopMovement();
 		verticalNormalizedPosition = 0;
 
 		while (contentRectTransform.offsetMin.y > 0)
 		{
-			AddChild ();
+			AddChild();
 		}
 	}
 
@@ -43,33 +43,35 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		bool wasDragging = isDragging;
 
 		// Remove children from beginning
-		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && contentRectTransform.offsetMax.y > ((RectTransform)virtualItems[0].gameObject.transform).rect.height + spacing)
+		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && 
+			contentRectTransform.offsetMax.y > ((RectTransform)virtualItems[0].gameObject.transform).rect.height + spacing)
 		{
 			RemoveChild();
 		}
 
 		// Remove children from end
-		while (virtualItems.Count > 0 && verticalNormalizedPosition < 1 && contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems[virtualItems.Count - 1].gameObject.transform).rect.height + spacing))
+		while (virtualItems.Count > 0 && verticalNormalizedPosition < 1 && 
+			contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems[virtualItems.Count - 1].gameObject.transform).rect.height + spacing))
 		{
 			RemoveChild(removeLastChild: true);
-		}
-
-		// Add children to end
-		while (CanAddChildAt(ChildPosition.Last))
-		{
-			AddChild (position: ChildPosition.Last);
 		}
 
 		// Add children to beginning
 		while (CanAddChildAt(ChildPosition.First))
 		{
-			AddChild (position: ChildPosition.First);
+			AddChild(position: ChildPosition.First);
+		}
+
+		// Add children to end
+		while (CanAddChildAt(ChildPosition.Last))
+		{
+			AddChild(position: ChildPosition.Last);
 		}
 
 		if (wasDragging && !isDragging)
 		{
 			lastBeginDragEventData.position = Input.mousePosition;
-			Rebuild (CanvasUpdate.PostLayout);
+			Rebuild(CanvasUpdate.PostLayout);
 			OnBeginDrag(lastBeginDragEventData);
 		}
 	}
@@ -78,14 +80,14 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	{
 		if (position == ChildPosition.Last)
 		{
-			if (maxIndex != -1 && GetNextIndex (position) >= maxIndex)
+			if (maxIndex != -1 && GetNextIndex(position) >= maxIndex)
 				return false;
 			
 			return contentRectTransform.offsetMin.y > 0;
 		}
 		else
 		{
-			if (GetNextIndex (position) < 0)
+			if (GetNextIndex(position) < 0)
 				return false;
 			
 			return contentRectTransform.offsetMax.y < 0;
@@ -99,7 +101,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		{
 			if (position == ChildPosition.First)
 			{
-				index = virtualItems [0].index - 1;
+				index = virtualItems[0].index - 1;
 			}
 			else
 			{
@@ -112,16 +114,16 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 	private void AddChild(ChildPosition position = ChildPosition.Last)
 	{
-		int index = GetNextIndex (position);
+		int index = GetNextIndex(position);
 
 		GameObject newChild = null;
 		if (pool.Count > 0)
 		{
 			newChild = pool.Pop();
-			newChild.SetActive (true);
+			newChild.SetActive(true);
 		}
 
-		newChild = createItemCallback (index, newChild);
+		newChild = createItemCallback(index, newChild);
 		if (newChild == null)
 		{
 			// End of the list
@@ -129,28 +131,28 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 			return;
 		}
 
-		newChild.transform.SetParent (content.transform);
+		newChild.transform.SetParent(content.transform);
 
 		if (position == ChildPosition.First)
 		{
-			newChild.transform.SetAsFirstSibling ();
+			newChild.transform.SetAsFirstSibling();
 		}
 		else
 		{
-			newChild.transform.SetAsLastSibling ();
+			newChild.transform.SetAsLastSibling();
 		}
 
-		Canvas.ForceUpdateCanvases ();
+		Canvas.ForceUpdateCanvases();
 
 		if (position == ChildPosition.First)
 		{
 			float childHeightAndSpacing = ((RectTransform)newChild.transform).rect.height + spacing;
-			SetContentAnchoredPos (new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
-			virtualItems.Insert (0, new VirtualListItem(newChild, index));
+			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
+			virtualItems.Insert(0, new VirtualListItem(newChild, index));
 		}
 		else
 		{
-			virtualItems.Add (new VirtualListItem(newChild, index));
+			virtualItems.Add(new VirtualListItem(newChild, index));
 		}
 	}
 
@@ -161,31 +163,34 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		float childHeightAndSpacing = ((RectTransform)childToRemove.transform).rect.height + spacing;
 
-		float newY = removeLastChild ? 
-			contentRectTransform.anchoredPosition.y + childHeightAndSpacing : 
-			contentRectTransform.anchoredPosition.y - childHeightAndSpacing;
-
 		if (!removeLastChild)
-		SetContentAnchoredPos (new Vector2(contentRectTransform.anchoredPosition.x, newY));
+		{
+			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, 
+				contentRectTransform.anchoredPosition.y - childHeightAndSpacing));
+		}
 
-		childToRemove.SetActive (false);
-		virtualItems.Remove (itemToRemove);
+		childToRemove.SetActive(false);
+		virtualItems.Remove(itemToRemove);
 
-		pool.Push (childToRemove);
+		pool.Push(childToRemove);
 
-		Canvas.ForceUpdateCanvases ();
+		Canvas.ForceUpdateCanvases();
 	}
 
 	public void SetContentAnchoredPos(Vector2 pos)
 	{
+		// Base ScrollRect class bases dragging on the content's beginning position,
+		// so when we move the content the dragging goes haywire. To fix this we
+		// simply restart the drag if the content was moved during the frame.
 		if (isDragging)
 		{
-			OnEndDrag (new PointerEventData(null) { button = PointerEventData.InputButton.Left });
+			OnEndDrag(new PointerEventData(null) { button = PointerEventData.InputButton.Left });
 		}
 
-		SetContentAnchoredPosition (pos);
+		SetContentAnchoredPosition(pos);
 	}
 
+	#region Drag overrides
 	override public void OnBeginDrag(PointerEventData eventData)
 	{
 		if (eventData.button != PointerEventData.InputButton.Left)
@@ -196,7 +201,13 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		lastBeginDragEventData = eventData;
 		isDragging = true;
-		base.OnBeginDrag (eventData);
+		base.OnBeginDrag(eventData);
+	}
+
+	override public void OnDrag(PointerEventData eventData)
+	{
+		if (!isDragging) return;
+		base.OnDrag(eventData);
 	}
 
 	override public void OnEndDrag(PointerEventData eventData)
@@ -205,14 +216,9 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 			return;
 
 		isDragging = false;
-		base.OnEndDrag (eventData);
+		base.OnEndDrag(eventData);
 	}
-
-	override public void OnDrag(PointerEventData eventData)
-	{
-		if (!isDragging) return;
-		base.OnDrag (eventData);
-	}
+	#endregion
 
 	class VirtualListItem
 	{
