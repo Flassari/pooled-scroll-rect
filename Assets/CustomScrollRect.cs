@@ -15,7 +15,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	private PointerEventData lastBeginDragEventData;
 	private RectTransform contentRectTransform;
 
-	private List<GameObject> pool;
+	private Stack<GameObject> pool;
 	private List<VirtualListItem> virtualItems;
 	private float spacing;
 
@@ -25,7 +25,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		
 		contentRectTransform = content.GetComponent<RectTransform> ();
 		spacing = content.GetComponent<VerticalLayoutGroup> ().spacing;
-		pool = new List<GameObject> ();
+		pool = new Stack<GameObject> ();
 		virtualItems = new List<VirtualListItem> ();
 
 		StopMovement ();
@@ -88,25 +88,36 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 			}
 		}
 
-		GameObject child = createItemCallback (index, null);
-		child.transform.SetParent (content.transform);
+		GameObject newChild = null;
+		if (pool.Count > 0)
+		{
+			newChild = pool.Pop();
+			newChild.SetActive (true);
+		}
+
+		newChild = createItemCallback (index, newChild);
+		newChild.transform.SetParent (content.transform);
 
 		if (setAsFirstSibling)
 		{
-			child.transform.SetAsFirstSibling ();
+			newChild.transform.SetAsFirstSibling ();
+		}
+		else
+		{
+			newChild.transform.SetAsLastSibling ();
 		}
 
 		Canvas.ForceUpdateCanvases ();
 
 		if (setAsFirstSibling)
 		{
-			float childHeightAndSpacing = ((RectTransform)child.transform).rect.height + spacing;
+			float childHeightAndSpacing = ((RectTransform)newChild.transform).rect.height + spacing;
 			SetContentAnchoredPos (new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
-			virtualItems.Insert (0, new VirtualListItem(child, index));
+			virtualItems.Insert (0, new VirtualListItem(newChild, index));
 		}
 		else
 		{
-			virtualItems.Add (new VirtualListItem(child, index));
+			virtualItems.Add (new VirtualListItem(newChild, index));
 		}
 	}
 
@@ -124,8 +135,10 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		if (!removeLastChild)
 		SetContentAnchoredPos (new Vector2(contentRectTransform.anchoredPosition.x, newY));
 
-		Destroy (childToRemove);
+		childToRemove.SetActive (false);
 		virtualItems.Remove (itemToRemove);
+
+		pool.Push (childToRemove);
 
 		Canvas.ForceUpdateCanvases ();
 	}
