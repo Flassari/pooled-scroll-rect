@@ -32,18 +32,32 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		while (contentRectTransform.offsetMin.y > 0)
 		{
-			AddChildToBottom ();
+			AddChild ();
 		}
 	}
 
-	private void AddChildToBottom()
+	private void AddChild(bool setAsFirstSibling = false)
 	{
-		int index = virtualItems.Count == 0 ? 0 : virtualItems [virtualItems.Count - 1].index + 1;
+		int index = 0;
+		if (virtualItems.Count > 0)
+		{
+			if (setAsFirstSibling)
+			{
+				index = virtualItems [0].index - 1;
+			}
+			else
+			{
+				index = virtualItems[virtualItems.Count - 1].index + 1;
+			}
+		}
 
-		GameObject child = createItemCallback (0, null);
-
+		GameObject child = createItemCallback (index, null);
 		child.transform.SetParent (content.transform);
-		child.GetComponent<Child> ().text.text = "#" + index;
+
+		if (setAsFirstSibling)
+		{
+			child.transform.SetAsFirstSibling ();
+		}
 
 		Canvas.ForceUpdateCanvases ();
 
@@ -64,6 +78,7 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	{
 		bool wasDragging = isDragging;
 
+		// Remove children from top
 		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && contentRectTransform.offsetMax.y > ((RectTransform)virtualItems[0].gameObject.transform).rect.height + spacing)
 		{
 			Debug.Log ("Item should be removed." + contentRectTransform.offsetMax.y + " > " + virtualItems[0].gameObject.GetComponent<RectTransform>().rect.height  + " + "  + spacing);
@@ -71,9 +86,10 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 			RemoveChildFromTop();
 		}
 
+		// Add children to bottom
 		while (contentRectTransform.offsetMin.y > 0)
 		{
-			AddChildToBottom ();
+			AddChild ();
 		}
 
 		if (wasDragging && !isDragging)
