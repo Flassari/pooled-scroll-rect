@@ -10,37 +10,18 @@ public class VirtualListTest : MonoBehaviour
 
 	private RectTransform rectTransform;
 	private float spacing;
-	private List<VirtualListItem> virtualItems;
 
 	void Start ()
 	{
-		virtualItems = new List<VirtualListItem> ();
-		rectTransform = GetComponent<RectTransform> ();
-
-		spacing = GetComponent<VerticalLayoutGroup> ().spacing;
-
-		scrollRect.StopMovement ();
-		scrollRect.verticalNormalizedPosition = 0;
-
-		while (rectTransform.offsetMin.y > 0 || virtualItems.Count < 100)
-		{
-			AddChildToBottom ();
-		}
+		scrollRect.Initialize (GetListItem);
 	}
 
 	void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.N))
+		/*if (Input.GetKeyDown(KeyCode.N))
 		{
 			AddChildToBottom ();
-		}
-
-		while (scrollRect.verticalNormalizedPosition < 1 && rectTransform.offsetMax.y > virtualItems[0].gameObject.GetComponent<RectTransform>().rect.height + spacing)
-		{
-			Debug.Log ("Item should be removed." + rectTransform.offsetMax.y + " > " + virtualItems[0].gameObject.GetComponent<RectTransform>().rect.height  + " + "  + spacing);
-
-			RemoveChildFromTop();
-		}
+		}*/
 
 		/*if (Input.GetKeyDown(KeyCode.D))
 		{
@@ -59,41 +40,6 @@ public class VirtualListTest : MonoBehaviour
 		}*/
 	}
 
-	void AddChildToBottom()
-	{
-		int index = virtualItems.Count == 0 ? 0 : virtualItems [virtualItems.Count - 1].index + 1;
-		
-		GameObject child;
-
-		child = GetListItem (0, null);
-		child.transform.SetParent (transform);
-
-		child.GetComponent<Child> ().text.text = "#" + index;
-
-		Canvas.ForceUpdateCanvases ();
-		Debug.Log (GetComponent<RectTransform>().offsetMin);
-		Debug.Log (GetComponent<RectTransform>().offsetMax);
-
-		virtualItems.Add (new VirtualListItem(child, index));
-	}
-
-	void RemoveChildFromTop()
-	{
-		VirtualListItem itemToRemove = virtualItems [0];
-		GameObject childToRemove = itemToRemove.gameObject;
-
-		float childHeightAndSpacing = childToRemove.GetComponent<RectTransform> ().rect.height + spacing;
-		float totalScrollableHeight = rectTransform.rect.height - transform.parent.GetComponent<RectTransform>().rect.height;
-		float delta = childHeightAndSpacing / totalScrollableHeight;
-
-		scrollRect.SetContentAnchoredPos (new Vector2(rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y - childHeightAndSpacing));
-
-		Destroy (childToRemove);
-		virtualItems.Remove (itemToRemove);
-
-		Canvas.ForceUpdateCanvases ();
-	}
-
 	private GameObject GetListItem(int index, GameObject pooledObject)
 	{
 		if (pooledObject == null)
@@ -109,16 +55,6 @@ public class VirtualListTest : MonoBehaviour
 		return child.gameObject;
 	}
 
-	class VirtualListItem
-	{
-		public VirtualListItem(GameObject gameObject, int index)
-		{
-			this.gameObject = gameObject;
-			this.index = index;
-		}
-		
-		public GameObject gameObject;
-		public int index;
-	}
+
 }
 
