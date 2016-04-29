@@ -61,7 +61,18 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		Canvas.ForceUpdateCanvases ();
 
-		virtualItems.Add (new VirtualListItem(child, index));
+		if (setAsFirstSibling)
+		{
+			float childHeightAndSpacing = child.GetComponent<RectTransform> ().rect.height + spacing;
+			SetContentAnchoredPos (new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
+			virtualItems.Insert (0, new VirtualListItem(child, index));
+
+		}
+		else
+		{
+			virtualItems.Add (new VirtualListItem(child, index));
+
+		}
 	}
 	
 	public void SetContentAnchoredPos(Vector2 pos)
@@ -90,6 +101,12 @@ public class CustomScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		while (contentRectTransform.offsetMin.y > 0)
 		{
 			AddChild ();
+		}
+
+		// Add children to top
+		while (contentRectTransform.offsetMax.y < 0)
+		{
+			AddChild (setAsFirstSibling: true);
 		}
 
 		if (wasDragging && !isDragging)
