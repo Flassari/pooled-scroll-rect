@@ -16,7 +16,7 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	private RectTransform contentRectTransform;
 
 	private Stack<GameObject> pool = new Stack<GameObject>();
-	private List<VirtualListItem> virtualItems = new List<VirtualListItem>();
+	private LinkedList<VirtualListItem> virtualItems = new LinkedList<VirtualListItem>();
 	private float spacing;
 	private int maxIndex = -1;
 
@@ -44,14 +44,14 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 		// Remove children from beginning
 		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && 
-			contentRectTransform.offsetMax.y > ((RectTransform)virtualItems[0].gameObject.transform).rect.height + spacing)
+			contentRectTransform.offsetMax.y > ((RectTransform)virtualItems.First.Value.gameObject.transform).rect.height + spacing)
 		{
 			RemoveChild(ChildPosition.First);
 		}
 
 		// Remove children from end
 		while (virtualItems.Count > 0 && verticalNormalizedPosition < 1 && 
-			contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems[virtualItems.Count - 1].gameObject.transform).rect.height + spacing))
+			contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems.Last.Value.gameObject.transform).rect.height + spacing))
 		{
 			RemoveChild(ChildPosition.Last);
 		}
@@ -101,11 +101,11 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		{
 			if (position == ChildPosition.First)
 			{
-				index = virtualItems[0].index - 1;
+				index = virtualItems.First.Value.index - 1;
 			}
 			else
 			{
-				index = virtualItems[virtualItems.Count - 1].index + 1;
+				index = virtualItems.Last.Value.index + 1;
 			}
 		}
 
@@ -152,17 +152,17 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		{
 			float childHeightAndSpacing = ((RectTransform)newChild.transform).rect.height + spacing;
 			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
-			virtualItems.Insert(0, new VirtualListItem(newChild, index));
+			virtualItems.AddFirst(new VirtualListItem(newChild, index));
 		}
 		else
 		{
-			virtualItems.Add(new VirtualListItem(newChild, index));
+			virtualItems.AddLast(new VirtualListItem(newChild, index));
 		}
 	}
 
 	private void RemoveChild(ChildPosition position)
 	{
-		VirtualListItem itemToRemove = virtualItems [position == ChildPosition.Last ? virtualItems.Count - 1 : 0];
+		VirtualListItem itemToRemove = (position == ChildPosition.Last ? virtualItems.Last : virtualItems.First).Value;
 		GameObject childToRemove = itemToRemove.gameObject;
 
 		float childHeightAndSpacing = ((RectTransform)childToRemove.transform).rect.height + spacing;
@@ -174,7 +174,15 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 
 		childToRemove.SetActive(false);
-		virtualItems.Remove(itemToRemove);
+
+		if (position == ChildPosition.Last)
+		{
+			virtualItems.RemoveLast();
+		}
+		else
+		{
+			virtualItems.RemoveFirst();
+		}
 
 		pool.Push(childToRemove);
 
