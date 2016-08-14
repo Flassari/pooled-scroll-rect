@@ -41,6 +41,18 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		if (!content || !contentRectTransform) return;
 		
 		bool wasDragging = isDragging;
+		
+		// Add children to beginning
+		while (CanAddChildAt(ChildPosition.First))
+		{
+			AddChild(ChildPosition.First);
+		}
+
+		// Add children to end
+		while (CanAddChildAt(ChildPosition.Last))
+		{
+			AddChild(ChildPosition.Last);
+		}
 
 		// Remove children from beginning
 		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && 
@@ -55,19 +67,7 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		{
 			RemoveChild(ChildPosition.Last);
 		}
-
-		// Add children to beginning
-		while (CanAddChildAt(ChildPosition.First))
-		{
-			AddChild(ChildPosition.First);
-		}
-
-		// Add children to end
-		while (CanAddChildAt(ChildPosition.Last))
-		{
-			AddChild(ChildPosition.Last);
-		}
-
+		
 		if (wasDragging && !isDragging)
 		{
 			lastBeginDragEventData.position = Input.mousePosition;
