@@ -127,10 +127,16 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		{
 			// End of the list
 			maxIndex = index;
-			// Return it back to the pool
-			pool.Push (pooledChild);
-			// Make sure it wasn't activated in createItemCallback
-			pooledChild.SetActive(false);
+
+			// If we popped a pooled child
+			if (pooledChild != null)
+            {
+				// Return it back to the pool
+				pool.Push(pooledChild);
+				// Make sure it wasn't activated in createItemCallback
+				pooledChild.SetActive(false);
+			}
+			
 			return;
 		}
 
