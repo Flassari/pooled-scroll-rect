@@ -7,9 +7,10 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, IDragHandler
+public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 {
-	private Func<int, GameObject, GameObject> createItemCallback;
+	public delegate GameObject CreateItemCallbackDelegate(int index, GameObject pooledObject);
+	public CreateItemCallbackDelegate CreateItemCallback;
 	
 	private bool isDragging = false;
 	private PointerEventData lastBeginDragEventData;
@@ -20,27 +21,19 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 	private float spacing;
 	private int maxIndex = -1;
 
-	public void Initialize(Func<int, GameObject, GameObject> createItemCallback)
+	override protected void Start()
 	{
-		this.createItemCallback = createItemCallback;
-		
+		base.Start();
+		StopMovement();
 		contentRectTransform = (RectTransform)content.transform;
 		spacing = content.GetComponent<VerticalLayoutGroup>().spacing;
-
-		StopMovement();
-		verticalNormalizedPosition = 0;
-
-		while (CanAddChildAt(ChildPosition.Last))
-		{
-			AddChild(ChildPosition.Last);
-		}
 	}
 
 	override protected void LateUpdate()
 	{
 		base.LateUpdate();
 
-		if (!content || !contentRectTransform) return;
+		if (CreateItemCallback == null || !content || !contentRectTransform) return;
 		
 		bool wasDragging = isDragging;
 
@@ -57,14 +50,14 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 
 		// Remove children from beginning
-		while (virtualItems.Count > 0 && verticalNormalizedPosition > 0 && 
+		while (virtualItems.Count > 0 && verticalNormalizedPosition >= 0 &&
 			contentRectTransform.offsetMax.y > ((RectTransform)virtualItems.First.Value.gameObject.transform).rect.height + spacing)
 		{
 			RemoveChild(ChildPosition.First);
 		}
 
 		// Remove children from end
-		while (virtualItems.Count > 0 && verticalNormalizedPosition < 1 && 
+		while (virtualItems.Count > 0 && verticalNormalizedPosition <= 1 &&
 			contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems.Last.Value.gameObject.transform).rect.height + spacing))
 		{
 			RemoveChild(ChildPosition.Last);
@@ -124,7 +117,7 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 			pooledChild = pool.Pop();
 		}
 
-		GameObject newChild = createItemCallback(index, pooledChild);
+		GameObject newChild = CreateItemCallback(index, pooledChild);
 		if (newChild == null)
 		{
 			// End of the list
@@ -199,9 +192,9 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 
 	public void SetContentAnchoredPos(Vector2 pos)
 	{
-		// Base ScrollRect class bases dragging on the content's beginning position,
+		// ScrollRect bases dragging on the content's beginning position,
 		// so when we move the content the dragging goes haywire. To fix this we
-		// simply restart the drag if the content was moved during the frame.
+		// simply restart the drag in LateUpdate if the content was moved during the frame.
 		if (isDragging)
 		{
 			OnEndDrag(new PointerEventData(null) { button = PointerEventData.InputButton.Left });
@@ -222,12 +215,6 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		lastBeginDragEventData = eventData;
 		isDragging = true;
 		base.OnBeginDrag(eventData);
-	}
-
-	override public void OnDrag(PointerEventData eventData)
-	{
-		if (!isDragging) return;
-		base.OnDrag(eventData);
 	}
 
 	override public void OnEndDrag(PointerEventData eventData)
