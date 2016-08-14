@@ -36,12 +36,14 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler, 
 		}
 	}
 
-	protected void Update()
+	override protected void LateUpdate()
 	{
+		base.LateUpdate();
+
 		if (!content || !contentRectTransform) return;
 		
 		bool wasDragging = isDragging;
-		
+
 		// Add children to beginning
 		while (CanAddChildAt(ChildPosition.First))
 		{
