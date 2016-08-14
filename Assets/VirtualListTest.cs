@@ -10,7 +10,7 @@ public class VirtualListTest : MonoBehaviour
 
 	void Start()
 	{
-		scrollRect.Initialize(GetListItem);
+		scrollRect.CreateItemCallback = GetListItem;
 	}
 
 	private GameObject GetListItem(int index, GameObject pooledObject)
