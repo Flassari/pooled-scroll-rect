@@ -18,7 +18,6 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 
 	private Stack<GameObject> pool = new Stack<GameObject>();
 	private LinkedList<VirtualListItem> virtualItems = new LinkedList<VirtualListItem>();
-	private float spacing;
 	private int maxIndex = -1;
 
 	override protected void Start()
@@ -26,7 +25,6 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 		base.Start();
 		StopMovement();
 		contentRectTransform = (RectTransform)content.transform;
-		spacing = content.GetComponent<VerticalLayoutGroup>().spacing;
 	}
 
 	override protected void LateUpdate()
@@ -37,28 +35,26 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 		
 		bool wasDragging = isDragging;
 
-		// Add children to beginning
-		while (CanAddChildAt(ChildPosition.First))
-		{
-			AddChild(ChildPosition.First);
-		}
-
 		// Add children to end
 		while (CanAddChildAt(ChildPosition.Last))
 		{
 			AddChild(ChildPosition.Last);
 		}
 
+		// Add children to beginning
+		while (CanAddChildAt(ChildPosition.First))
+		{
+			AddChild(ChildPosition.First);
+		}
+
 		// Remove children from beginning
-		while (virtualItems.Count > 0 && verticalNormalizedPosition >= 0 &&
-			contentRectTransform.offsetMax.y > ((RectTransform)virtualItems.First.Value.gameObject.transform).rect.height + spacing)
+		while (CanRemoveChildAt(ChildPosition.First))
 		{
 			RemoveChild(ChildPosition.First);
 		}
 
 		// Remove children from end
-		while (virtualItems.Count > 0 && verticalNormalizedPosition <= 1 &&
-			contentRectTransform.offsetMin.y < -(((RectTransform)virtualItems.Last.Value.gameObject.transform).rect.height + spacing))
+		while (CanRemoveChildAt(ChildPosition.Last))
 		{
 			RemoveChild(ChildPosition.Last);
 		}
@@ -86,6 +82,32 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 				return false;
 			
 			return contentRectTransform.offsetMax.y < 0;
+		}
+	}
+
+	private bool CanRemoveChildAt(ChildPosition position)
+	{
+		if (virtualItems.Count < 2) // There must be at least one item remaining after the removal
+			return false; 
+		
+        if (position == ChildPosition.First)
+		{
+			if (verticalNormalizedPosition < 0) // Must be scrolled down from start position
+				return false;
+
+			// Is the content scrolled more than the second child's top (meaning the first object is completely off screen)
+			return ((RectTransform)virtualItems.First.Next.Value.gameObject.transform).offsetMax.y > -contentRectTransform.offsetMax.y;
+		}
+		else
+		{
+			if (verticalNormalizedPosition > 1) // Must be scrolled up from bottom position
+				return false;
+
+			// Is the difference between the bottom position of the two last items greater than the content's bottom offset
+			// (meaning the last object is completely off screen)
+			float lastOffsetY = ((RectTransform)virtualItems.Last.Value.gameObject.transform).offsetMin.y;
+            float secondLastOffsetY = ((RectTransform)virtualItems.Last.Previous.Value.gameObject.transform).offsetMin.y;
+			return contentRectTransform.offsetMin.y < (lastOffsetY - secondLastOffsetY);
 		}
 	}
 
@@ -151,8 +173,8 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 
 		if (position == ChildPosition.First)
 		{
-			float childHeightAndSpacing = ((RectTransform)newChild.transform).rect.height + spacing;
-			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y + childHeightAndSpacing));
+			float offset = ((RectTransform)virtualItems.First.Value.gameObject.transform).offsetMax.y;
+			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, contentRectTransform.anchoredPosition.y - offset));
 			virtualItems.AddFirst(new VirtualListItem(newChild, index));
 		}
 		else
@@ -166,12 +188,12 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 		VirtualListItem itemToRemove = (position == ChildPosition.Last ? virtualItems.Last : virtualItems.First).Value;
 		GameObject childToRemove = itemToRemove.gameObject;
 
-		float childHeightAndSpacing = ((RectTransform)childToRemove.transform).rect.height + spacing;
+		float offset = ((RectTransform)virtualItems.First.Next.Value.gameObject.transform).offsetMax.y;
 
 		if (position == ChildPosition.First)
 		{
 			SetContentAnchoredPos(new Vector2(contentRectTransform.anchoredPosition.x, 
-				contentRectTransform.anchoredPosition.y - childHeightAndSpacing));
+				contentRectTransform.anchoredPosition.y + offset));
 		}
 
 		childToRemove.SetActive(false);
