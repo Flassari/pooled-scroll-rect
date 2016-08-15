@@ -22,3 +22,4 @@ obj/
 *.sln.DotSettings.user
 *.v11.suo
 *.v11.suo
+.vs/
