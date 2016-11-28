@@ -92,7 +92,7 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 		
         if (position == ChildPosition.First)
 		{
-			if (verticalNormalizedPosition < 0) // Must be scrolled down from start position
+			if (verticalNormalizedPosition <= 0) // Must be scrolled down from start position
 				return false;
 
 			// Is the content scrolled more than the second child's top (meaning the first object is completely off screen)
@@ -100,7 +100,7 @@ public class PooledScrollRect : ScrollRect, IBeginDragHandler, IEndDragHandler
 		}
 		else
 		{
-			if (verticalNormalizedPosition > 1) // Must be scrolled up from bottom position
+			if (verticalNormalizedPosition >= 1) // Must be scrolled up from bottom position
 				return false;
 
 			// Is the difference between the bottom position of the two last items greater than the content's bottom offset
